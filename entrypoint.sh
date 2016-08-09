@@ -52,16 +52,16 @@ configure_ci_runner() {
     if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
       if [[ ${RUNNER_EXECUTOR} == "docker" ]]; then
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-          gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
-            -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" --docker-image "docker:latest" --docker-privileged
+          gitlab-ci-multi-runner register \
+            -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" --docker-image "docker:latest"
       else
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-          gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
+          gitlab-ci-multi-runner register \
             -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}"
       fi
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-        gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml
+        gitlab-ci-multi-runner register
     fi
   fi
 }
@@ -87,7 +87,7 @@ if [[ -z ${1} ]]; then
     --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
     --exec $(which gitlab-ci-multi-runner) -- run \
       --working-directory ${GITLAB_CI_MULTI_RUNNER_DATA_DIR} \
-      --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml ${EXTRA_ARGS}
+      ${EXTRA_ARGS}
 else
   exec "$@"
 fi
