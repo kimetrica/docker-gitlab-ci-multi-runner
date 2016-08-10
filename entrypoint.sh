@@ -83,6 +83,12 @@ if [[ -z ${1} ]]; then
   grant_access_to_docker_socket
   configure_ci_runner
 
+# generating known_hosts file when CI_SERVER_HOSTNAME is set, to avoid
+# `Host key verification failed` when cloning submodules.
+  if [[ -n ${CI_SERVER_HOSTNAME} ]]; then
+    ssh-keyscan -H ${CI_SERVER_HOSTNAME} > ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/.ssh/known_hosts
+  fi
+
   start-stop-daemon --start \
     --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
     --exec $(which gitlab-ci-multi-runner) -- run \
