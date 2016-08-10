@@ -52,16 +52,16 @@ configure_ci_runner() {
     if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
       if [[ ${RUNNER_EXECUTOR} == "docker" ]]; then
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-          gitlab-ci-multi-runner register \
+        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw" \
             -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" --docker-image "docker:latest"
       else
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-          gitlab-ci-multi-runner register \
+        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw" \
             -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}"
       fi
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-        gitlab-ci-multi-runner register
+        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw"
     fi
   fi
 }
