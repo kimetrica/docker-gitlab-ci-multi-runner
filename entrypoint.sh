@@ -52,17 +52,20 @@ configure_ci_runner() {
     if [[ -n ${CI_SERVER_URL} && -n ${RUNNER_TOKEN} && -n ${RUNNER_DESCRIPTION} && -n ${RUNNER_EXECUTOR} ]]; then
       if [[ ${RUNNER_EXECUTOR} == "docker" ]]; then
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw" --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro" \
-            -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}" --docker-image "docker:latest"
+        gitlab-ci-multi-runner register --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro" \
+            -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}"
       else
         sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw" --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro" \
+        gitlab-ci-multi-runner register --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro" \
             -n -u "${CI_SERVER_URL}" -r "${RUNNER_TOKEN}" --name "${RUNNER_DESCRIPTION}" --executor "${RUNNER_EXECUTOR}"
       fi
     else
       sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
-        gitlab-ci-multi-runner register --docker-volumes "/var/run/docker.sock:/var/run/docker.sock:rw" --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro"
+        gitlab-ci-multi-runner register --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro"
     fi
+  else
+    sudo -HEu ${GITLAB_CI_MULTI_RUNNER_USER} \
+    gitlab-ci-multi-runner register --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml --docker-volumes "/root/.docker/config.json:/root/.docker/config.json:ro"
   fi
 }
 
@@ -89,11 +92,21 @@ if [[ -z ${1} ]]; then
     ssh-keyscan -H ${CI_SERVER_HOSTNAME} > ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/.ssh/known_hosts
   fi
 
-  start-stop-daemon --start \
-    --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
-    --exec $(which gitlab-ci-multi-runner) -- run \
-      --working-directory ${GITLAB_CI_MULTI_RUNNER_DATA_DIR} \
-      ${EXTRA_ARGS}
+  if [[ ! -e ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml ]]; then
+    start-stop-daemon --start \
+      --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
+      --exec $(which gitlab-ci-multi-runner) -- run \
+        --working-directory ${GITLAB_CI_MULTI_RUNNER_DATA_DIR} \
+        ${EXTRA_ARGS}
+  else
+    start-stop-daemon --start \
+      --chuid ${GITLAB_CI_MULTI_RUNNER_USER}:${GITLAB_CI_MULTI_RUNNER_USER} \
+      --exec $(which gitlab-ci-multi-runner) -- run \
+        --config ${GITLAB_CI_MULTI_RUNNER_DATA_DIR}/config.toml \
+        --working-directory ${GITLAB_CI_MULTI_RUNNER_DATA_DIR} \
+        ${EXTRA_ARGS}
+  fi
+
 else
   exec "$@"
 fi
